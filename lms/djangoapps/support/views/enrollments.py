@@ -94,8 +94,6 @@ class EnrollmentSupportListView(GenericAPIView):
                     username=user.username,
                     old_mode=old_mode
                 ))
-            if new_mode == CourseMode.CREDIT_MODE:
-                return HttpResponseBadRequest(u'Enrollment cannot be changed to credit mode.')
         except KeyError as err:
             return HttpResponseBadRequest(u'The field {} is required.'.format(text_type(err)))
         except InvalidKeyError:
@@ -176,11 +174,12 @@ class EnrollmentSupportListView(GenericAPIView):
             list of `Mode`
 
         """
-        course_modes = CourseMode.modes_for_course(
-            course_key,
-            include_expired=True
-        )
+        course_modes = CourseMode.objects.filter(course_id=course_key)
+        modes = ([mode.to_tuple() for mode in course_modes])
+        if not modes:
+            modes = [CourseMode.DEFAULT_MODE]
+
         return [
             ModeSerializer(mode).data
-            for mode in course_modes
+            for mode in modes
         ]
