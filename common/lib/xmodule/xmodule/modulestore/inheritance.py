@@ -4,6 +4,7 @@ Support for inheritance of fields down an XBlock hierarchy.
 from __future__ import absolute_import
 
 from django.conf import settings
+from django.utils import timezone
 
 from xmodule.partitions.partitions import UserPartition
 from xblock.core import XBlockMixin
@@ -232,6 +233,33 @@ class InheritanceMixin(XBlockMixin):
         default=False,
         scope=Scope.settings
     )
+
+    @property
+    def close_date(self):
+        """
+        Return the date submissions should be closed from.
+        """
+        due_date = self.due
+
+        if self.graceperiod is not None and due_date:
+            return due_date + self.graceperiod
+        else:
+            return due_date
+
+    def is_past_due(self):
+        """
+        Is it now past this problem's due date, including grace period?
+        """
+        return (self.close_date is not None and
+                timezone.now() > self.close_date)
+
+    def has_deadline_passed(self):
+        """
+        Verifies if the problems can be submitted or not.
+        """
+        if self.self_paced or self.close_date is None:
+            return True
+        return self.is_past_due()
 
 
 def compute_inherited_metadata(descriptor):
