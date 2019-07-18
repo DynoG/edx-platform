@@ -258,7 +258,7 @@ class InheritanceMixin(XBlockMixin):
         Verifies if the problems can be submitted or not.
         """
         if self.self_paced or self.close_date is None:
-            return True
+            return False
         return self.is_past_due()
 
 
